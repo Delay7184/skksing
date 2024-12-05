@@ -1,0 +1,55 @@
+name: Compile Rule-sets
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+
+  compile-rule-sets:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Clone Repository
+      uses: actions/checkout@v3
+      with:
+        repository: SukkaLab/ruleset.skk.moe
+        path: repo
+        ref: master
+        
+    - name: Setup sing-box
+      env:
+        SING_BOX_DEB_URL: "https://github.com/SagerNet/sing-box/releases/download/v1.10.3/sing-box_1.10.3_linux_amd64.deb"
+      run: |
+        set -Eeuo pipefail
+        wget -O sing-box.deb $SING_BOX_DEB_URL
+        sudo dpkg -i sing-box.deb
+        
+    - name: Compile Rule-sets
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/non_ip $GITHUB_WORKSPACE/ip $GITHUB_WORKSPACE/domainset
+        cd repo/sing-box
+        for file in $(find . -type f -name '*.json'); do
+          output_file="${GITHUB_WORKSPACE}/${file%.json}.srs"
+          echo "Compiling $file to $output_file"
+          sing-box rule-set compile --output "$output_file" "$file"
+        done
+                
+    - name: Clean Up
+      if: always()
+      run: |
+        rm -rf repo
+        rm -rf sing-box.deb
+        
+    - name: Commit and Push Changes
+      run: |
+        git config --global user.name 'GitHub Actions'
+        git config --global user.email 'actions@github.com'
+        git add .
+        git commit -m "Compile rule-sets"
+        git push
