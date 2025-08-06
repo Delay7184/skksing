@@ -22,6 +22,20 @@ jobs:
         path: repo
         ref: master
         
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+        
+    - name: Preprocess JSON Rules
+      run: |
+        cd repo/sing-box
+        for file in $(find . -type f -name '*.json'); do
+          echo "Processing $file"
+          python3 $GITHUB_WORKSPACE/split_process_name_ruleset.py "$file" "${file}.tmp"
+          mv "${file}.tmp" "$file"
+        done
+
     - name: Setup sing-box
       env:
         SING_BOX_DEB_URL: "https://github.com/SagerNet/sing-box/releases/download/v1.12.0/sing-box_1.12.0_linux_amd64.deb"
