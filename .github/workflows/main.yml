@@ -32,7 +32,7 @@ jobs:
         cd repo/sing-box
         for file in $(find . -type f -name '*.json'); do
           echo "Processing $file"
-          python3 $GITHUB_WORKSPACE/split_process_name_ruleset.py "$file" "${file}.tmp"
+          python3 $GITHUB_WORKSPACE/split_process_ruleset.py "$file" "${file}.tmp"
           mv "${file}.tmp" "$file"
         done
 
